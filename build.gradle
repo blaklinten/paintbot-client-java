@@ -31,6 +31,6 @@ dependencies {
 
 
 task run(type:JavaExec) {
-    main = 'se.cygni.paintbot.SimplePaintbotPlayer'
+    main = 'se.cygni.paintbot.LickanBot'
     classpath = sourceSets.main.runtimeClasspath
 }

@@ -14,43 +14,42 @@ import se.cygni.paintbot.api.response.PlayerRegistered;
 import se.cygni.paintbot.api.util.GameSettingsUtils;
 import se.cygni.paintbot.client.AnsiPrinter;
 import se.cygni.paintbot.client.BasePaintbotClient;
+import se.cygni.paintbot.client.MapCoordinate;
 import se.cygni.paintbot.client.MapUtility;
 import se.cygni.paintbot.client.MapUtilityImpl;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+public class LickanBot extends BasePaintbotClient {
 
-public class SimplePaintbotPlayer extends BasePaintbotClient {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SimplePaintbotPlayer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LickanBot.class);
 
     // Set to false if you want to start the game from a GUI
     private static final boolean AUTO_START_GAME = true;
 
     // Personalise your game ...
-    private static final String SERVER_NAME = "server.paintbot.cygni.se";
-    private static final int SERVER_PORT = 80;
+    //private static final String SERVER_NAME = "server.paintbot.cygni.se";
+    //private static final int SERVER_PORT = 80;
+    private static final String SERVER_NAME = "localhost";
+    private static final int SERVER_PORT = 8080;
 
     private static final GameMode GAME_MODE = GameMode.TRAINING;
-    private static final String BOT_NAME = "The Simple Painter " + (int) (Math.random() * 1000) ;
+    private static final String BOT_NAME = "Lickan Super Awesome Bot";
 
     // Set to false if you don't want the game world printed every game tick.
     private static final boolean ANSI_PRINTER_ACTIVE = false;
     private AnsiPrinter ansiPrinter = new AnsiPrinter(ANSI_PRINTER_ACTIVE, true);
 
     public static void main(String[] args) {
-        SimplePaintbotPlayer simplePaintbotPlayer = new SimplePaintbotPlayer();
+        LickanBot lickanBot = new LickanBot();
 
         try {
-            ListenableFuture<WebSocketSession> connect = simplePaintbotPlayer.connect();
+            ListenableFuture<WebSocketSession> connect = lickanBot.connect();
             connect.get();
         } catch (Exception e) {
             LOGGER.error("Failed to connect to server", e);
             System.exit(1);
         }
 
-        startTheBot(simplePaintbotPlayer);
+        startTheBot(lickanBot);
     }
 
     /**
@@ -58,7 +57,7 @@ public class SimplePaintbotPlayer extends BasePaintbotClient {
      * : in TRAINING mode, until the single game ends.
      * : in TOURNAMENT mode, until the server tells us its all over.
      */
-    private static void startTheBot(final SimplePaintbotPlayer simplePaintbotPlayer) {
+    private static void startTheBot(final LickanBot lickanBot) {
         Runnable task = () -> {
             do {
                 try {
@@ -66,7 +65,7 @@ public class SimplePaintbotPlayer extends BasePaintbotClient {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-            } while (simplePaintbotPlayer.isPlaying());
+            } while (lickanBot.isPlaying());
 
             LOGGER.info("Shutting down");
         };
@@ -78,36 +77,38 @@ public class SimplePaintbotPlayer extends BasePaintbotClient {
     @Override
     public void onMapUpdate(MapUpdateEvent mapUpdateEvent) {
         // Do your implementation here! (or at least start from here, entry point for updates)
-        ansiPrinter.printMap(mapUpdateEvent);
+        //ansiPrinter.printMap(mapUpdateEvent);
+
+		//List<Integer> moves = new ArrayList<Integer>(5);
 
         // MapUtil contains lot's of useful methods for querying the map!
         MapUtility mapUtil = new MapUtilityImpl(mapUpdateEvent.getMap(), getPlayerId());
 
-        List<CharacterAction> actions = new ArrayList<>();
+        MapCoordinate[] powerUpList = mapUtil.getCoordinatesContainingPowerUps();
+		int min = Integer.MAX_VALUE;
+		MapCoordinate currentPosition = mapUtil.getMyCoordinate();
+		MapCoordinate closestPowerUp = new MapCoordinate(0,0);
+		for (MapCoordinate powerUp : powerUpList){
+			int currentDistance = currentPosition.getManhattanDistanceTo(powerUp);
+			if (currentDistance < min){
+				min = currentDistance;
+				closestPowerUp = powerUp;
+			}
+		}
 
-        // Let's see in which movement actions I can take
-        for (CharacterAction action : CharacterAction.values()) {
-            if (mapUtil.canIMoveInDirection(action)) {
-                actions.add(action);
-            }
-        }
 
-        // Check if we're carrying a power up
-        if(mapUtil.getMyCharacterInfo().isCarryingPowerUp()) {
-            actions.add(CharacterAction.EXPLODE);
-        }
-
-        Random r = new Random();
-        CharacterAction chosenAction = CharacterAction.STAY;
-
-        // Choose a random direction
-        if (!actions.isEmpty()) {
-            chosenAction = actions.get(r.nextInt(actions.size()));
-        }
-
-        // Register action here!
-        registerMove(mapUpdateEvent.getGameTick(), chosenAction);
+        // Register action here!currenDistance
+        registerMove(mapUpdateEvent.getGameTick(), CharacterAction.RIGHT);
     }
+
+	/* Our functions
+ 	 *
+ 	 */
+
+
+	/* End our functions
+ 	 *
+ 	 */
 
     @Override
     public void onPaintbotDead(CharacterStunnedEvent characterStunnedEvent) {

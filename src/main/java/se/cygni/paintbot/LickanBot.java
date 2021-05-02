@@ -1,5 +1,10 @@
 package se.cygni.paintbot;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.concurrent.ListenableFuture;
@@ -7,6 +12,7 @@ import org.springframework.web.socket.WebSocketSession;
 import se.cygni.paintbot.api.event.*;
 import se.cygni.paintbot.api.exception.InvalidPlayerName;
 import se.cygni.paintbot.api.model.CharacterAction;
+import se.cygni.paintbot.api.model.CharacterInfo;
 import se.cygni.paintbot.api.model.GameMode;
 import se.cygni.paintbot.api.model.GameSettings;
 import se.cygni.paintbot.api.model.PlayerPoints;
@@ -84,27 +90,98 @@ public class LickanBot extends BasePaintbotClient {
         // MapUtil contains lot's of useful methods for querying the map!
         MapUtility mapUtil = new MapUtilityImpl(mapUpdateEvent.getMap(), getPlayerId());
 
-        MapCoordinate[] powerUpList = mapUtil.getCoordinatesContainingPowerUps();
-		int min = Integer.MAX_VALUE;
-		MapCoordinate currentPosition = mapUtil.getMyCoordinate();
-		MapCoordinate closestPowerUp = new MapCoordinate(0,0);
-		for (MapCoordinate powerUp : powerUpList){
-			int currentDistance = currentPosition.getManhattanDistanceTo(powerUp);
-			if (currentDistance < min){
-				min = currentDistance;
-				closestPowerUp = powerUp;
-			}
-		}
+		CharacterAction action = getBestAction(mapUtil);
 
-
-        // Register action here!currenDistance
-        registerMove(mapUpdateEvent.getGameTick(), CharacterAction.RIGHT);
+        registerMove(mapUpdateEvent.getGameTick(), action);
     }
 
 	/* Our functions
  	 *
  	 */
 
+	List<Integer> calculateActionValues(MapUtility mapUtil){
+		List<Integer> actionValues = new ArrayList<Integer>(5);
+		Pair<MapCoordinate, Integer> closestPowerUp = findClosestpowerUp(mapUtil);
+		MapCoordinate closestPowerUpCoordinate = closestPowerUp.getLeft();
+		Integer closestPowerUpDistance = closestPowerUp.getRight();
+
+		actionValues.add(0, evaluateDirection(CharacterAction.LEFT, closestPowerUpCoordinate, closestPowerUpDistance,  mapUtil));
+		actionValues.add(1, evaluateDirection(CharacterAction.RIGHT, closestPowerUpCoordinate, closestPowerUpDistance, mapUtil));
+		actionValues.add(2, evaluateDirection(CharacterAction.DOWN, closestPowerUpCoordinate, closestPowerUpDistance, mapUtil));
+		actionValues.add(3, evaluateDirection(CharacterAction.UP, closestPowerUpCoordinate, closestPowerUpDistance, mapUtil));
+		actionValues.add(4, evaluateExplode(mapUtil));
+
+		return actionValues;
+	}
+
+	Integer evaluateDirection(CharacterAction direction, MapCoordinate closestPowerUpCoordinate, Integer closestPowerUpDistance, MapUtility mapUtil){
+		// Evaulate each directoin here, i.e. can I go in direction, how good is it...
+		if (!mapUtil.canIMoveInDirection(direction)){
+			return Integer.valueOf(0);
+		} else {
+			if (closestPowerUpDistance > mapUtil.getMyCoordinate().translateByAction(direction).getManhattanDistanceTo(closestPowerUpCoordinate)){
+			return Integer.valueOf(2);
+			}
+			return Integer.valueOf(1);
+		}
+	}
+
+	Integer evaluateExplode(MapUtility mapUtil){
+		// can I explode? if so, is it a good time?
+
+		;
+		if(mapUtil.getMyCharacterInfo().isCarryingPowerUp()){
+			return 5;
+		} else {
+			return 0;
+		}
+	}
+
+	Pair<MapCoordinate, Integer> findClosestpowerUp(MapUtility mapUtil){
+        MapCoordinate[] powerUpList = mapUtil.getCoordinatesContainingPowerUps();
+		Integer min = Integer.MAX_VALUE;
+		MapCoordinate currentPosition = mapUtil.getMyCoordinate();
+		MapCoordinate closestPowerUpCoordinate = new MapCoordinate(0,0);
+
+		for (MapCoordinate powerUpCoordinate : powerUpList){
+			int currentDistance = currentPosition.getManhattanDistanceTo(powerUpCoordinate);
+			if (currentDistance < min){
+				min = currentDistance;
+				closestPowerUpCoordinate = powerUpCoordinate;
+			}
+		}
+		return Pair.of(closestPowerUpCoordinate, min);
+	}
+
+	CharacterAction getBestAction(MapUtility mapUtil){
+		List<Integer> actionValues = calculateActionValues(mapUtil);
+
+		int     maxIndex = 0;
+		Integer maxValue = 0;
+
+		for (int i  = 0; i < actionValues.size(); i++){
+			Integer currentvalue = actionValues.get(i);
+			if ( currentvalue > maxValue){
+				maxValue = currentvalue;
+				maxIndex = i;
+			}
+		}
+
+		switch (maxIndex){
+			case  0:
+ 			   	return CharacterAction.LEFT;
+			case  1: 
+				return CharacterAction.RIGHT;
+			case  2:
+ 			   	return CharacterAction.DOWN;
+			case  3:
+ 			   	return CharacterAction.UP;
+			case  4:
+ 			   	return CharacterAction.EXPLODE;
+			default:
+ 			   	return CharacterAction.STAY;
+		}
+	}
 
 	/* End our functions
  	 *

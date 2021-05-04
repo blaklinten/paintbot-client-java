@@ -115,26 +115,24 @@ public class LickanBot extends BasePaintbotClient {
 	}
 
 	Integer evaluateDirection(CharacterAction direction, MapCoordinate closestPowerUpCoordinate, Integer closestPowerUpDistance, MapUtility mapUtil){
+		Integer totalScore = 0;
 		// Evaulate each directoin here, i.e. can I go in direction, how good is it...
-		if (!mapUtil.canIMoveInDirection(direction)){
-			return Integer.valueOf(0);
-		} else {
+		if (mapUtil.canIMoveInDirection(direction)){
 			if (closestPowerUpDistance > mapUtil.getMyCoordinate().translateByAction(direction).getManhattanDistanceTo(closestPowerUpCoordinate)){
-			return Integer.valueOf(2);
+			totalScore = totalScore + 2;
 			}
-			return Integer.valueOf(1);
 		}
+		return totalScore;
 	}
 
 	Integer evaluateExplode(MapUtility mapUtil){
 		// can I explode? if so, is it a good time?
+		Integer totalScore = 0;
 
-		;
 		if(mapUtil.getMyCharacterInfo().isCarryingPowerUp()){
-			return 5;
-		} else {
-			return 0;
+			totalScore = totalScore + 5;
 		}
+		return totalScore;
 	}
 
 	Pair<MapCoordinate, Integer> findClosestpowerUp(MapUtility mapUtil){

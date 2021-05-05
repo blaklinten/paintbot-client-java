@@ -201,20 +201,9 @@ public class LickanBot extends BasePaintbotClient {
                 isAvoidingObstacle = true;
                 avoidTick = 3;
 
-                actionValues.set(maxIndex, 0);
-
-                int     maxIndex2 = 0;
-                Integer maxValue2 = 0;
-
-                for (int i  = 0; i < actionValues.size(); i++){
-                    Integer currentvalue2 = actionValues.get(i);
-                    if ( currentvalue2 > maxValue2){
-                        maxValue2 = currentvalue2;
-                        maxIndex2 = i;
-                    }
-                }
-
-                tempAction = getActionFromIndex(maxIndex2);
+                Random random = new Random();
+                int rand = random.nextInt() % 4;
+                tempAction = getActionFromIndex(rand);
 
                 return tempAction;
             }

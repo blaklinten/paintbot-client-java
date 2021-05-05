@@ -199,7 +199,7 @@ public class LickanBot extends BasePaintbotClient {
             if(!mapUtil.canIMoveInDirection(bestAction)){
 
                 isAvoidingObstacle = true;
-                avoidTick = 4;
+                avoidTick = 3;
 
                 actionValues.set(maxIndex, 0);
 

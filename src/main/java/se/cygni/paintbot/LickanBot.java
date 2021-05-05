@@ -45,7 +45,8 @@ public class LickanBot extends BasePaintbotClient {
     private AnsiPrinter ansiPrinter = new AnsiPrinter(ANSI_PRINTER_ACTIVE, true);
     
     public static boolean isAvoidingObstacle = false;
-    public static CharacterAction actionToBeAvoided = null;
+    public static CharacterAction tempAction = null;
+    public static int avoidTick = 0;
 
     public static void main(String[] args) {
         LickanBot lickanBot = new LickanBot();
@@ -90,13 +91,17 @@ public class LickanBot extends BasePaintbotClient {
 
 		//List<Integer> moves = new ArrayList<Integer>(5);
 
+        if(isAvoidingObstacle && avoidTick > 0){
+            avoidTick -= 1;
+            if (avoidTick == 0) isAvoidingObstacle = false;
+            registerMove(mapUpdateEvent.getGameTick(), tempAction);
+            return;
+        }
+
         // MapUtil contains lot's of useful methods for querying the map!
         MapUtility mapUtil = new MapUtilityImpl(mapUpdateEvent.getMap(), getPlayerId());
 
 		CharacterAction action = getBestAction(mapUtil);
-		//if(isAvoidingObstacle && avoidTick > 0){
-		    // Gör något här????
-		//}
 
         registerMove(mapUpdateEvent.getGameTick(), action);
     }
@@ -166,36 +171,32 @@ public class LickanBot extends BasePaintbotClient {
 	}
 
 	CharacterAction getBestAction(MapUtility mapUtil){
-		if (isAvoidingObstacle){
+        List<Integer> actionValues = calculateActionValues(mapUtil);
 
-		} else {
+        int     maxIndex = 0;
+        Integer maxValue = 0;
 
-			List<Integer> actionValues = calculateActionValues(mapUtil);
-	
-			int     maxIndex = 0;
-			Integer maxValue = 0;
-	
-			for (int i  = 0; i < actionValues.size(); i++){
-				Integer currentvalue = actionValues.get(i);
-				if ( currentvalue > maxValue){
-					maxValue = currentvalue;
-					maxIndex = i;
-				}
-			}
-			
-			CharacterAction bestAction = getActionFromIndex(actionValues.get(maxIndex));
-			if(bestAction == CharacterAction.LEFT || bestAction == CharacterAction.RIGHT || bestAction == CharacterAction.DOWN || bestAction == CharacterAction.UP){
-			    if(!mapUtil.canIMoveInDirection(bestAction)){
-			    
-			        isAvoidingObstacle = true;
-			        actionToBeAvoided = bestAction;
-			        
-			        actionValues.set(maxIndex, 0);
-			        return getBestAction(mapUtil);
-			    }
-			}
-			return getActionFromIndex(maxIndex);
-		}
+        for (int i  = 0; i < actionValues.size(); i++){
+            Integer currentvalue = actionValues.get(i);
+            if ( currentvalue > maxValue){
+                maxValue = currentvalue;
+                maxIndex = i;
+            }
+        }
+
+        CharacterAction bestAction = getActionFromIndex(maxIndex);
+        if(bestAction == CharacterAction.LEFT || bestAction == CharacterAction.RIGHT || bestAction == CharacterAction.DOWN || bestAction == CharacterAction.UP){
+            if(!mapUtil.canIMoveInDirection(bestAction)){
+
+                isAvoidingObstacle = true;
+                avoidTick = 4;
+
+                actionValues.set(maxIndex, 0);
+                tempAction = getBestAction(mapUtil);
+                return tempAction;
+            }
+        }
+        return getActionFromIndex(maxIndex);
 	}
 
 	/* End our functions

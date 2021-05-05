@@ -32,12 +32,12 @@ public class LickanBot extends BasePaintbotClient {
     private static final boolean AUTO_START_GAME = true;
 
     // Personalise your game ...
-    //private static final String SERVER_NAME = "server.paintbot.cygni.se";
-    //private static final int SERVER_PORT = 80;
-    private static final String SERVER_NAME = "localhost";
-    private static final int SERVER_PORT = 8080;
+    private static final String SERVER_NAME = "server.paintbot.cygni.se";
+    private static final int SERVER_PORT = 80;
+//    private static final String SERVER_NAME = "localhost";
+//    private static final int SERVER_PORT = 8080;
 
-    private static final GameMode GAME_MODE = GameMode.TRAINING;
+    private static final GameMode GAME_MODE = GameMode.TOURNAMENT;
     private static final String BOT_NAME = "Lickan Super Awesome Bot";
 
     // Set to false if you don't want the game world printed every game tick.

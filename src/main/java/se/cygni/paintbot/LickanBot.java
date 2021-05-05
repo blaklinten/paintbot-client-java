@@ -43,6 +43,9 @@ public class LickanBot extends BasePaintbotClient {
     // Set to false if you don't want the game world printed every game tick.
     private static final boolean ANSI_PRINTER_ACTIVE = false;
     private AnsiPrinter ansiPrinter = new AnsiPrinter(ANSI_PRINTER_ACTIVE, true);
+    
+    public static boolean isAvoidingObstacle = False;
+    public static CharacterAction actionToBeAvoided = null;
 
     public static void main(String[] args) {
         LickanBot lickanBot = new LickanBot();
@@ -91,6 +94,9 @@ public class LickanBot extends BasePaintbotClient {
         MapUtility mapUtil = new MapUtilityImpl(mapUpdateEvent.getMap(), getPlayerId());
 
 		CharacterAction action = getBestAction(mapUtil);
+		//if(isAvoidingObstacle && avoidTick > 0){
+		    // Gör något här????
+		//}
 
         registerMove(mapUpdateEvent.getGameTick(), action);
     }
@@ -115,13 +121,10 @@ public class LickanBot extends BasePaintbotClient {
 	}
 
 	Integer evaluateDirection(CharacterAction direction, MapCoordinate closestPowerUpCoordinate, Integer closestPowerUpDistance, MapUtility mapUtil){
+	
 		Integer totalScore = 0;
-		// Evaulate each directoin here, i.e. can I go in direction, how good is it...
-		if (mapUtil.canIMoveInDirection(direction)){
-			if (closestPowerUpDistance > mapUtil.getMyCoordinate().translateByAction(direction).getManhattanDistanceTo(closestPowerUpCoordinate)){
-			totalScore = totalScore + 2;
-			}
-		}
+		MapCoordinate possibleNextCoordinate = mapUtil.getMyCoordinate().translateByAction(direction);
+		if (possibleNextCoordinate.getManhattanDistanceTo(closestPowerUpCoordinate) < closestPowerUpDistance)){totalScore = totalScore + 2;}
 		return totalScore;
 	}
 
@@ -163,6 +166,18 @@ public class LickanBot extends BasePaintbotClient {
 				maxValue = currentvalue;
 				maxIndex = i;
 			}
+		}
+		
+		CharacterAction bestAction = actionValues.get(maxIndex);
+		if(bestAction == CharacterAction.LEFT || bestAction == CharacterAction.RIGHT || bestAction == CharacterAction.DOWN || bestAction == CharacterAction.UP){
+		    if(!canIMoveInDirection(bestAction)){
+		    
+		        isAvoidingObstacle = true;
+		        actionToBeAvoided = bestAction;
+		        
+		        actionValues.set(maxIndex, 0);
+		        getBestAction(mapUtil);
+		    }
 		}
 
 		switch (maxIndex){

@@ -3,6 +3,7 @@ package se.cygni.paintbot;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -92,17 +93,23 @@ public class LickanBot extends BasePaintbotClient {
 
 		//List<Integer> moves = new ArrayList<Integer>(5);
 
+        // MapUtil contains lot's of useful methods for querying the map!
+        MapUtility mapUtil = new MapUtilityImpl(mapUpdateEvent.getMap(), getPlayerId());
+
         if(isAvoidingObstacle && avoidTick > 0){
             avoidTick -= 1;
             if (avoidTick == 0) {
                 isAvoidingObstacle = false;
-                registerMove(mapUpdateEvent.getGameTick(), tempAction);
+                if(mapUtil.canIMoveInDirection(tempAction))
+                    registerMove(mapUpdateEvent.getGameTick(), tempAction);
+                else {
+                    Random random = new Random();
+                    int rand = random.nextInt() % 4;
+                    registerMove(mapUpdateEvent.getGameTick(), getActionFromIndex(rand));
+                }
                 return;
             }
         }
-
-        // MapUtil contains lot's of useful methods for querying the map!
-        MapUtility mapUtil = new MapUtilityImpl(mapUpdateEvent.getMap(), getPlayerId());
 
 		CharacterAction action = getBestAction(mapUtil);
 

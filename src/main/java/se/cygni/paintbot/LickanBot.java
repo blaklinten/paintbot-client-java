@@ -93,9 +93,11 @@ public class LickanBot extends BasePaintbotClient {
 
         if(isAvoidingObstacle && avoidTick > 0){
             avoidTick -= 1;
-            if (avoidTick == 0) isAvoidingObstacle = false;
-            registerMove(mapUpdateEvent.getGameTick(), tempAction);
-            return;
+            if (avoidTick == 0) {
+                isAvoidingObstacle = false;
+                registerMove(mapUpdateEvent.getGameTick(), tempAction);
+                return;
+            }
         }
 
         // MapUtil contains lot's of useful methods for querying the map!

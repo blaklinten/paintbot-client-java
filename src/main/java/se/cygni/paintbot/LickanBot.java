@@ -44,7 +44,7 @@ public class LickanBot extends BasePaintbotClient {
     private static final boolean ANSI_PRINTER_ACTIVE = false;
     private AnsiPrinter ansiPrinter = new AnsiPrinter(ANSI_PRINTER_ACTIVE, true);
     
-    public static boolean isAvoidingObstacle = False;
+    public static boolean isAvoidingObstacle = false;
     public static CharacterAction actionToBeAvoided = null;
 
     public static void main(String[] args) {
@@ -101,6 +101,17 @@ public class LickanBot extends BasePaintbotClient {
         registerMove(mapUpdateEvent.getGameTick(), action);
     }
 
+	CharacterAction getActionFromIndex(int index){
+		switch (index){
+		case 0: return CharacterAction.LEFT;
+		case 1: return CharacterAction.RIGHT;
+		case 2: return CharacterAction.DOWN;
+		case 3: return CharacterAction.UP;
+		case 4: return CharacterAction.EXPLODE;
+		default: return CharacterAction.STAY;
+		}
+	}
+
 	/* Our functions
  	 *
  	 */
@@ -124,7 +135,7 @@ public class LickanBot extends BasePaintbotClient {
 	
 		Integer totalScore = 0;
 		MapCoordinate possibleNextCoordinate = mapUtil.getMyCoordinate().translateByAction(direction);
-		if (possibleNextCoordinate.getManhattanDistanceTo(closestPowerUpCoordinate) < closestPowerUpDistance)){totalScore = totalScore + 2;}
+		if (possibleNextCoordinate.getManhattanDistanceTo(closestPowerUpCoordinate) < closestPowerUpDistance){totalScore = totalScore + 2;}
 		return totalScore;
 	}
 
@@ -155,44 +166,35 @@ public class LickanBot extends BasePaintbotClient {
 	}
 
 	CharacterAction getBestAction(MapUtility mapUtil){
-		List<Integer> actionValues = calculateActionValues(mapUtil);
+		if (isAvoidingObstacle){
 
-		int     maxIndex = 0;
-		Integer maxValue = 0;
+		} else {
 
-		for (int i  = 0; i < actionValues.size(); i++){
-			Integer currentvalue = actionValues.get(i);
-			if ( currentvalue > maxValue){
-				maxValue = currentvalue;
-				maxIndex = i;
+			List<Integer> actionValues = calculateActionValues(mapUtil);
+	
+			int     maxIndex = 0;
+			Integer maxValue = 0;
+	
+			for (int i  = 0; i < actionValues.size(); i++){
+				Integer currentvalue = actionValues.get(i);
+				if ( currentvalue > maxValue){
+					maxValue = currentvalue;
+					maxIndex = i;
+				}
 			}
-		}
-		
-		CharacterAction bestAction = actionValues.get(maxIndex);
-		if(bestAction == CharacterAction.LEFT || bestAction == CharacterAction.RIGHT || bestAction == CharacterAction.DOWN || bestAction == CharacterAction.UP){
-		    if(!canIMoveInDirection(bestAction)){
-		    
-		        isAvoidingObstacle = true;
-		        actionToBeAvoided = bestAction;
-		        
-		        actionValues.set(maxIndex, 0);
-		        getBestAction(mapUtil);
-		    }
-		}
-
-		switch (maxIndex){
-			case  0:
- 			   	return CharacterAction.LEFT;
-			case  1: 
-				return CharacterAction.RIGHT;
-			case  2:
- 			   	return CharacterAction.DOWN;
-			case  3:
- 			   	return CharacterAction.UP;
-			case  4:
- 			   	return CharacterAction.EXPLODE;
-			default:
- 			   	return CharacterAction.STAY;
+			
+			CharacterAction bestAction = getActionFromIndex(actionValues.get(maxIndex));
+			if(bestAction == CharacterAction.LEFT || bestAction == CharacterAction.RIGHT || bestAction == CharacterAction.DOWN || bestAction == CharacterAction.UP){
+			    if(!mapUtil.canIMoveInDirection(bestAction)){
+			    
+			        isAvoidingObstacle = true;
+			        actionToBeAvoided = bestAction;
+			        
+			        actionValues.set(maxIndex, 0);
+			        return getBestAction(mapUtil);
+			    }
+			}
+			return getActionFromIndex(maxIndex);
 		}
 	}
 

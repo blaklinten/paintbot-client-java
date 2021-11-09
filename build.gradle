@@ -17,7 +17,7 @@ repositories {
 }
 
 ext {
-    paintbotVersion = '0.1.22'
+    paintbotVersion = '0.2.0'
 }
 
 sourceCompatibility = 11
